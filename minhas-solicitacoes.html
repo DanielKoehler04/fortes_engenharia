@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minhas Solicitacoes</title>
+  <link rel="stylesheet" href="css/estilo.css">
+  <link rel="stylesheet" href="css/responsivo.css">
+</head>
+<body>
+  <nav class="barra-navegacao">
+    <div class="container conteudo-barra">
+      <a href="painel.html" class="marca">Fortes Engenharia</a>
+      <ul class="menu">
+        <li><a href="painel.html">Painel</a></li>
+        <li><a href="solicitar.html" data-papel="encarregado">Nova Solicitacao</a></li>
+        <li><a href="minhas-solicitacoes.html" class="active" data-papel="encarregado">Minhas Solicitacoes</a></li>
+        <li><a href="aprovacoes.html" data-papel="gerente">Aprovacoes</a></li>
+        <li><a href="relatorios.html">Relatorios</a></li>
+        <li><a href="cadastro-projeto.html" data-papel="gerente">Projetos</a></li>
+      </ul>
+      <div class="info-usuario">
+        <a class="user" href="perfil.html"><span class="user-name"></span></a>
+        <button class="botao-sair" onclick="Auth.logout()">Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container conteudo">
+    <div class="cabecalho-pagina">
+      <h1>Minhas Solicitacoes</h1>
+      <p>Visualize suas solicitacoes de horas extras</p>
+    </div>
+
+    <div class="filtros">
+      <select id="filtro-status" onchange="aplicarFiltros()">
+        <option value="">Todos os status</option>
+        <option value="pendente">Pendente</option>
+        <option value="aprovada_gerente">Aprovada Gerente</option>
+        <option value="reprovada">Reprovada</option>
+      </select>
+
+      <select id="filtro-projeto" onchange="aplicarFiltros()">
+        <option value="">Todos os projetos</option>
+      </select>
+    </div>
+
+    <div class="cartao">
+      <div id="tabela-solicitacoes"></div>
+    </div>
+  </div>
+
+
+  <footer>
+    <div class="container">Fortes Engenharia 2025</div>
+  </footer>
+
+  <script src="js/autenticacao.js"></script>
+  <script src="js/armazenamento.js"></script>
+  <script src="js/utilidades.js"></script>
+
+  <script>
+    Auth.protegerPagina();
+
+    let solicitacoes = [];
+
+    function inicializar() {
+      carregarProjetos();
+      carregarSolicitacoes();
+    }
+
+    function carregarProjetos() {
+      const select = document.getElementById('filtro-projeto');
+      const projetos = Storage.obterProjetos();
+      projetos.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = p.nome;
+        select.appendChild(option);
+      });
+    }
+
+    function carregarSolicitacoes() {
+      solicitacoes = Storage.obterMinhasSolicitacoes();
+      aplicarFiltros();
+    }
+
+    function aplicarFiltros() {
+      const filtroStatus = document.getElementById('filtro-status').value;
+      const filtroProjeto = document.getElementById('filtro-projeto').value;
+
+      let filtradas = [...solicitacoes];
+
+      if (filtroStatus) {
+        filtradas = filtradas.filter(s => s.status === filtroStatus);
+      }
+
+      if (filtroProjeto) {
+        filtradas = filtradas.filter(s => s.projetoId == filtroProjeto);
+      }
+
+      renderizarTabela(filtradas);
+    }
+
+    function renderizarTabela(dados) {
+      if (dados.length === 0) {
+        document.getElementById('tabela-solicitacoes').innerHTML = '<p>Nenhuma solicitacao encontrada.</p>';
+        return;
+      }
+
+      const colunas = [
+        { titulo: 'Data', campo: 'criadoEm', renderizar: (item) => App.formatarData(item.criadoEm) },
+        { titulo: 'Projeto', campo: 'projetoNome' },
+        { titulo: 'Data Ref', campo: 'dataReferencia', renderizar: (item) => App.formatarData(item.dataReferencia) },
+        { titulo: 'Status', campo: 'status', renderizar: (item) => `<span class="etiqueta ${App.obterClasseStatus(item.status)}">${App.obterTextoStatus(item.status)}</span>` },
+          { titulo: 'Acoes', renderizar: (item) => `<button onclick="verDetalhes(${item.id})" class="botao">Detalhes</button>` }
+      ];
+
+      App.renderizarTabela('tabela-solicitacoes', dados, colunas);
+    }
+
+    function verDetalhes(id) {
+      const s = solicitacoes.find(x => x.id === id);
+      if (!s) return;
+
+      let msg = '';
+      msg += `Projeto: ${s.projetoNome}\n`;
+      msg += `Data Referencia: ${App.formatarData(s.dataReferencia)}\n`;
+      msg += `Motivo: ${s.motivo}\n`;
+      msg += `Status: ${App.obterTextoStatus(s.status)}\n`;
+      msg += 'Itens:';
+      s.itens.forEach(item => {
+        msg += `\n- ${item.colaborador} | ${App.formatarData(item.data)} | ${App.formatarHora(item.horaInicio)}-${App.formatarHora(item.horaFim)} | ${App.formatarMinutosParaHoras(item.minutos)} | ${item.tipo}`;
+      });
+
+      alert(msg);
+    }
+
+    inicializar();
+  </script>
+</body>
+</html>

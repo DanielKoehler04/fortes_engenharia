@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel</title>
+  <link rel="stylesheet" href="css/estilo.css">
+  <link rel="stylesheet" href="css/responsivo.css">
+</head>
+<body>
+  <nav class="barra-navegacao">
+    <div class="container conteudo-barra">
+      <a href="painel.html" class="marca">Fortes Engenharia</a>
+      <ul class="menu">
+        <li><a href="painel.html" class="active">Painel</a></li>
+        <li><a href="solicitar.html" data-papel="encarregado">Nova Solicitacao</a></li>
+        <li><a href="minhas-solicitacoes.html" data-papel="encarregado">Minhas Solicitacoes</a></li>
+        <li><a href="aprovacoes.html" data-papel="gerente">Aprovacoes</a></li>
+        <li><a href="relatorios.html">Relatorios</a></li>
+        <li><a href="cadastro-projeto.html" data-papel="gerente">Projetos</a></li>
+      </ul>
+      <div class="info-usuario">
+        <a class="user" href="perfil.html"><span class="user-name"></span></a>
+        <button class="botao-sair" onclick="Auth.logout()">Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container conteudo">
+    
+
+      <div class="card" style="width:100%;">
+
+        <h2>Configurações</h2>
+
+        <div class="config-block">
+
+            <div class="config-item">
+                
+                <p class="config-label">Idioma</p>
+
+                <select class="config-select">
+                    <option value="pt">Português (Brasil)</option>
+                    <option value="pt-pt">Português (Portugal)</option>
+                    <option value="en">Inglês</option>
+                    <option value="es">Espanhol</option>
+                    <option value="fr">Francês</option>
+                    <option value="de">Alemão</option>
+                    <option value="it">Italiano</option>
+                    <option value="jp">Japonês</option>
+                </select>
+           
+            </div>
+
+            <div class="config-item">
+                <p class="config-label">Iluminação</p>
+                <select class="config-select">
+                    <option value="pt">Escuro</option>
+                    <option value="pt-pt">Claro</option>
+                    
+                </select>
+            </div>
+
+            <div class="config-item">
+                <p class="config-label">Backup</p>
+                 <select class="config-select">
+                    <option value="pt">Automático</option>
+                    <option value="pt-pt">Manual</option>
+                    
+                </select>
+            </div>
+
+           
+
+        </div>
+
+        <button class="edit-btn">Editar Configurações</button>
+    </div>
+    </div>
+
+  <footer>
+    <div class="container">Fortes Engenharia 2025</div>
+  </footer>
+
+  <script src="js/autenticacao.js"></script>
+  <script src="js/armazenamento.js"></script>
+  <script src="js/utilidades.js"></script>
+
+  <script>
+    Auth.protegerPagina();
+
+    function carregarPainel() {
+      let sessao = Auth.obterSessao();
+      let solicitacoes = Storage.obterSolicitacoes();
+      
+      let minhasSolicitacoes;
+      let pendentes;
+
+      if(sessao.papel === 'tecnico') {
+        minhasSolicitacoes = solicitacoes;
+        pendentes = minhasSolicitacoes.filter(s => s.status === 'pendente');
+      } else if(sessao.papel === 'encarregado') {
+        minhasSolicitacoes = solicitacoes;
+        pendentes = solicitacoes.filter(s => s.status === 'pendente');
+      } else {
+        minhasSolicitacoes = solicitacoes;
+        pendentes = solicitacoes.filter(s => s.status === 'aprovada_encarregado');
+      }
+
+      let aprovadas = minhasSolicitacoes.filter(s => 
+        s.status === 'aprovada_encarregado' || s.status === 'aprovada_gerente'
+      );
+
+      const horasMes = calcularHorasMes(minhasSolicitacoes);
+
+      document.getElementById('stat-total').textContent = minhasSolicitacoes.length;
+      document.getElementById('stat-pendentes').textContent = pendentes.length;
+      document.getElementById('stat-aprovadas').textContent = aprovadas.length;
+      document.getElementById('stat-horas').textContent = horasMes + 'h';
+
+      renderizarSolicitacoesRecentes(minhasSolicitacoes);
+    }
+
+    function calcularHorasMes(solicitacoes) {
+      const mesAtual = new Date().getMonth();
+      const anoAtual = new Date().getFullYear();
+      let totalMinutos = 0;
+
+      solicitacoes
+        .filter(s => ['aprovada_encarregado', 'aprovada_gerente'].includes(s.status))
+        .forEach(sol => {
+          if (!sol.itens) return;
+          sol.itens.forEach(item => {
+            const dataItem = new Date(item.data);
+            if (dataItem.getMonth() === mesAtual && dataItem.getFullYear() === anoAtual) {
+              totalMinutos += item.minutos || 0;
+            }
+          });
+        });
+
+      return Math.round(totalMinutos / 60);
+    }
+
+    function renderizarSolicitacoesRecentes(solicitacoes) {
+      const container = document.getElementById('solicitacoes-recentes');
+      const recentes = solicitacoes.sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm)).slice(0, 5);
+
+      if (recentes.length === 0) {
+        container.innerHTML = '<p>Nenhuma solicitacao encontrada.</p>';
+        return;
+      }
+
+      const colunas = [
+        { titulo: 'Data', campo: 'criadoEm', renderizar: (item) => App.formatarData(item.criadoEm) },
+        { titulo: 'Projeto', campo: 'projetoNome' },
+        { titulo: 'Motivo', campo: 'motivo', renderizar: (item) => item.motivo.length > 50 ? item.motivo.substring(0, 50) + '...' : item.motivo },
+        { titulo: 'Status', campo: 'status', renderizar: (item) => `<span class="etiqueta ${App.obterClasseStatus(item.status)}">${App.obterTextoStatus(item.status)}</span>` }
+      ];
+
+      App.renderizarTabela('solicitacoes-recentes', recentes, colunas);
+    }
+
+    carregarPainel();
+  </script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solicitar Hora Extra</title>
+  <link rel="stylesheet" href="css/estilo.css">
+  <link rel="stylesheet" href="css/responsivo.css">
+</head>
+<body>
+  <nav class="barra-navegacao">
+    <div class="container conteudo-barra">
+      <a href="painel.html" class="marca">Fortes Engenharia</a>
+      <ul class="menu">
+        <li><a href="painel.html">Painel</a></li>
+        <li><a href="solicitar.html" class="active">Nova Solicitacao</a></li>
+        <li><a href="minhas-solicitacoes.html" data-papel="encarregado">Minhas Solicitacoes</a></li>
+        <li><a href="aprovacoes.html" data-papel="gerente">Aprovacoes</a></li>
+        <li><a href="relatorios.html">Relatorios</a></li>
+        <li><a href="cadastro-projeto.html" data-papel="gerente">Projetos</a></li>
+      </ul>
+      <div class="info-usuario">
+        <a class="user" href="perfil.html"><span class="user-name"></span></a>
+        <button class="botao-sair" onclick="Auth.logout()">Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container conteudo">
+    <div class="cabecalho-pagina">
+      <h1>Solicitar Hora Extra</h1>
+      <p>Preencha os dados da solicitacao</p>
+    </div>
+
+    <div class="cartao">
+      <form id="form-solicitacao" onsubmit="salvarSolicitacao(event)">
+        <h3>Dados da Solicitacao</h3>
+
+        <div class="grupo-formulario">
+          <label for="projeto">Projeto:</label>
+          <select id="projeto" required>
+            <option value="">Selecione um projeto</option>
+          </select>
+        </div>
+
+        <div class="grupo-formulario">
+          <label for="dataReferencia">Data de Referencia:</label>
+          <input type="date" id="dataReferencia" required>
+        </div>
+
+        <div class="grupo-formulario">
+          <label for="motivo">Motivo:</label>
+          <textarea id="motivo" required></textarea>
+        </div>
+
+        <h3>Colaboradores e Horarios</h3>
+        <div id="itens-container"></div>
+        <button type="button" onclick="adicionarItem()" class="botao">Adicionar Colaborador</button>
+
+        <div style="margin-top: 20px;">
+          <button type="submit" class="botao">Enviar Solicitacao</button>
+          <button type="button" onclick="window.location.href='painel.html'" class="botao">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">Fortes Engenharia 2025</div>
+  </footer>
+
+  <script src="js/autenticacao.js"></script>
+  <script src="js/armazenamento.js"></script>
+  <script src="js/utilidades.js"></script>
+
+  <script>
+    Auth.protegerPagina(['tecnico', 'encarregado', 'gerente']);
+
+    let contadorItens = 0;
+
+    function inicializar() {
+      carregarProjetos();
+      adicionarItem();
+    }
+
+    function carregarProjetos() {
+      const select = document.getElementById('projeto');
+      const projetos = Storage.obterProjetos();
+      
+      projetos.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = `${p.codigo} - ${p.nome}`;
+        select.appendChild(option);
+      });
+    }
+
+    function adicionarItem() {
+      contadorItens++;
+      const container = document.getElementById('itens-container');
+      const div = document.createElement('div');
+      div.className = 'cartao';
+      div.style.marginBottom = '15px';
+      div.innerHTML = `
+        <h4>Colaborador ${contadorItens}</h4>
+        <div class="grupo-formulario">
+          <label>Nome:</label>
+          <select class="item-colaborador" required>
+            <option value="default">Selecionar...</option>
+            <option value="diurna">Carlos</option>
+            
+          </select>
+        </div>
+        <div class="grupo-formulario">
+          <label>Data:</label>
+          <input type="date" class="item-data" required>
+        </div>
+        <div class="grupo-formulario">
+          <label>Hora Inicio:</label>
+          <input type="time" class="item-inicio" required>
+        </div>
+        <div class="grupo-formulario">
+          <label>Hora Fim:</label>
+          <input type="time" class="item-fim" required>
+        </div>
+        <div class="grupo-formulario">
+          <label>Tipo:</label>
+          <select class="item-tipo" required>
+            <option value="diurna">Diurna (50%)</option>
+            <option value="noturna">Noturna (60%)</option>
+          </select>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="botao">Remover</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function salvarSolicitacao(event) {
+      event.preventDefault();
+      
+      const projeto = document.getElementById('projeto');
+      const dataRef = document.getElementById('dataReferencia').value;
+      const motivo = document.getElementById('motivo').value;
+
+      const itens = [];
+      const itemCards = document.querySelectorAll('#itens-container > div');
+      
+      itemCards.forEach(card => {
+        const colaborador = card.querySelector('.item-colaborador').value;
+        const data = card.querySelector('.item-data').value;
+        const inicio = card.querySelector('.item-inicio').value;
+        const fim = card.querySelector('.item-fim').value;
+        const tipo = card.querySelector('.item-tipo').value;
+        const minutos = App.calcularMinutos(inicio, fim);
+
+        itens.push({
+          colaborador,
+          colaboradorNome: colaborador,
+          data,
+          horaInicio: inicio,
+          horaFim: fim,
+          minutos,
+          tipo,
+          adicional: tipo === 'noturna' ? 60 : 50
+        });
+      });
+
+      const solicitacao = {
+        projetoId: parseInt(projeto.value),
+        projetoNome: projeto.options[projeto.selectedIndex].text,
+        dataReferencia: dataRef,
+        motivo,
+        itens
+      };
+
+      Storage.salvarSolicitacao(solicitacao);
+      alert('Solicitacao enviada com sucesso!');
+      window.location.href = 'painel.html';
+    }
+
+    inicializar();
+  </script>
+</body>
+</html>

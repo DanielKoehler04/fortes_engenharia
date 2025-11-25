@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aprovacoes</title>
+  <link rel="stylesheet" href="css/estilo.css">
+  <link rel="stylesheet" href="css/responsivo.css">
+</head>
+<body>
+  <nav class="barra-navegacao">
+    <div class="container conteudo-barra">
+      <a href="painel.html" class="marca">Fortes Engenharia</a>
+      <ul class="menu">
+        <li><a href="painel.html">Painel</a></li>
+        <li><a href="solicitar.html" data-papel="encarregado">Nova Solicitacao</a></li>
+        <li><a href="minhas-solicitacoes.html" data-papel="encarregado">Minhas Solicitacoes</a></li>
+        <li><a href="aprovacoes.html" class="active">Aprovacoes</a></li>
+        <li><a href="relatorios.html">Relatorios</a></li>
+        <li><a href="cadastro-projeto.html" data-papel="gerente">Projetos</a></li>
+      </ul>
+      <div class="info-usuario">
+        <a class="user" href="perfil.html"><span class="user-name"></span></a>
+        <button class="botao-sair" onclick="Auth.logout()">Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container conteudo">
+    <div class="cabecalho-pagina">
+      <h1>Aprovacoes</h1>
+      <p>Solicitacoes pendentes de aprovacao</p>
+    </div>
+
+    <div class="cartao">
+      <div id="tabela-aprovacoes"></div>
+    </div>
+  </div>
+
+
+  <footer>
+    <div class="container">Fortes Engenharia 2025</div>
+  </footer>
+
+  <script src="js/autenticacao.js"></script>
+  <script src="js/armazenamento.js"></script>
+  <script src="js/utilidades.js"></script>
+
+  <script>
+    Auth.protegerPagina(['gerente']);
+
+    function carregarAprovacoes() {
+      const solicitacoes = Storage.obterSolicitacoesPendentes();
+
+      if (solicitacoes.length === 0) {
+        document.getElementById('tabela-aprovacoes').innerHTML = '<p>Nenhuma solicitacao pendente de aprovacao.</p>';
+        return;
+      }
+
+      const colunas = [
+        { titulo: 'Data', campo: 'criadoEm', renderizar: (item) => App.formatarData(item.criadoEm) },
+        { titulo: 'Solicitante', campo: 'solicitante' },
+        { titulo: 'Projeto', campo: 'projetoNome' },
+        { titulo: 'Motivo', campo: 'motivo', renderizar: (item) => item.motivo.substring(0, 50) + '...' },
+        { titulo: 'Status', campo: 'status', renderizar: (item) => `<span class="etiqueta ${App.obterClasseStatus(item.status)}">${App.obterTextoStatus(item.status)}</span>` },
+        { titulo: 'Acoes', renderizar: (item) => `
+            <button onclick="aprovarSolicitacao(${item.id})" class="botao">Aprovar</button>
+            <button onclick="reprovarSolicitacao(${item.id})" class="botao">Reprovar</button>
+          ` }
+      ];
+
+      App.renderizarTabela('tabela-aprovacoes', solicitacoes, colunas);
+    }
+
+    function aprovarSolicitacao(id) {
+      const ok = confirm('Confirmar aprovacao desta solicitacao?');
+      if (!ok) return;
+      const sucesso = Storage.aprovarSolicitacao(id);
+      if (sucesso) {
+        alert('Solicitacao aprovada com sucesso!');
+        carregarAprovacoes();
+      }
+    }
+
+    function reprovarSolicitacao(id) {
+      const ok = confirm('Confirmar reprovacao desta solicitacao?');
+      if (!ok) return;
+      const sucesso = Storage.reprovarSolicitacao(id);
+      if (sucesso) {
+        alert('Solicitacao reprovada!');
+        carregarAprovacoes();
+      }
+    }
+
+    carregarAprovacoes();
+  </script>
+</body>
+</html>

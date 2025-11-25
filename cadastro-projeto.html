@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projetos</title>
+  <link rel="stylesheet" href="css/estilo.css">
+  <link rel="stylesheet" href="css/responsivo.css">
+</head>
+<body>
+  <nav class="barra-navegacao">
+    <div class="container conteudo-barra">
+      <a href="painel.html" class="marca">Fortes Engenharia</a>
+      <ul class="menu">
+        <li><a href="painel.html">Painel</a></li>
+        <li><a href="solicitar.html" data-papel="encarregado">Nova Solicitacao</a></li>
+        <li><a href="minhas-solicitacoes.html" data-papel="encarregado">Minhas Solicitacoes</a></li>
+        <li><a href="aprovacoes.html" data-papel="gerente">Aprovacoes</a></li>
+        <li><a href="relatorios.html">Relatorios</a></li>
+        <li><a href="cadastro-projeto.html" class="active">Projetos</a></li>
+      </ul>
+      <div class="info-usuario">
+        <a class="user" href="perfil.html"><span class="user-name"></span></a>
+        <button class="botao-sair" onclick="Auth.logout()">Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container conteudo">
+    <div class="cabecalho-pagina">
+      <h1>Gerenciar Projetos</h1>
+      <p>Cadastro de projetos</p>
+    </div>
+
+    <button onclick="novoProjeto()" class="botao">Novo Projeto</button>
+
+    <div class="cartao">
+      <div id="tabela-projetos"></div>
+    </div>
+  </div>
+
+  <div id="janela-projeto" class="janela">
+    <div class="conteudo-janela">
+      <div class="cabecalho-janela">
+        <h2 id="modal-titulo">Novo Projeto</h2>
+      </div>
+      <form id="form-projeto" onsubmit="salvarProjeto(event)">
+        <div class="grupo-formulario">
+          <label for="nome">Nome:</label>
+          <input type="text" id="nome" required>
+        </div>
+        <div class="grupo-formulario">
+          <label for="cliente">Cliente:</label>
+          <input type="text" id="cliente" required>
+        </div>
+        <div class="grupo-formulario">
+          <label for="codigo">Codigo:</label>
+          <input type="text" id="codigo" required>
+        </div>
+        <div class="grupo-formulario">
+          <label for="descricao">Descricao:</label>
+          <textarea id="descricao"></textarea>
+        </div>
+        <div class="rodape-janela">
+          <button type="submit" class="botao">Salvar</button>
+          <button type="button" onclick="fecharModal()" class="botao">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">Fortes Engenharia 2025</div>
+  </footer>
+
+  <script src="js/autenticacao.js"></script>
+  <script src="js/armazenamento.js"></script>
+  <script src="js/utilidades.js"></script>
+
+  <script>
+    Auth.protegerPagina(['gerente']);
+
+    let projetoAtual = null;
+
+    function carregarProjetos() {
+      const projetos = Storage.obterProjetos();
+
+      if (projetos.length === 0) {
+        document.getElementById('tabela-projetos').innerHTML = '<p>Nenhum projeto cadastrado.</p>';
+        return;
+      }
+
+      const colunas = [
+        { titulo: 'Codigo', campo: 'codigo' },
+        { titulo: 'Nome', campo: 'nome' },
+        { titulo: 'Cliente', campo: 'cliente' },
+        { titulo: 'Acoes', renderizar: (item) => `
+          <button onclick="editarProjeto(${item.id})" class="botao">Editar</button>
+          <button onclick="excluirProjeto(${item.id})" class="botao">Excluir</button>
+        ` }
+      ];
+
+      App.renderizarTabela('tabela-projetos', projetos, colunas);
+    }
+
+    function novoProjeto() {
+      projetoAtual = null;
+      document.getElementById('modal-titulo').textContent = 'Novo Projeto';
+      document.getElementById('form-projeto').reset();
+      document.getElementById('janela-projeto').classList.add('active');
+    }
+
+    function editarProjeto(id) {
+      const projetos = Storage.obterProjetos();
+      projetoAtual = projetos.find(p => p.id === id);
+      if (!projetoAtual) return;
+
+      document.getElementById('modal-titulo').textContent = 'Editar Projeto';
+      document.getElementById('nome').value = projetoAtual.nome;
+      document.getElementById('cliente').value = projetoAtual.cliente;
+      document.getElementById('codigo').value = projetoAtual.codigo;
+      document.getElementById('descricao').value = projetoAtual.descricao || '';
+      document.getElementById('janela-projeto').classList.add('active');
+    }
+
+    function salvarProjeto(event) {
+      event.preventDefault();
+
+      const projeto = {
+        id: projetoAtual ? projetoAtual.id : Date.now(),
+        nome: document.getElementById('nome').value,
+        cliente: document.getElementById('cliente').value,
+        codigo: document.getElementById('codigo').value,
+        descricao: document.getElementById('descricao').value,
+        ativo: true,
+        criadoEm: projetoAtual ? projetoAtual.criadoEm : new Date().toISOString()
+      };
+
+      Storage.salvarProjeto(projeto);
+      alert('Projeto salvo com sucesso!');
+      fecharModal();
+      carregarProjetos();
+    }
+
+    function excluirProjeto(id) {
+      if (!confirm('Deseja realmente excluir este projeto?')) return;
+      Storage.excluirProjeto(id);
+      carregarProjetos();
+    }
+
+    function fecharModal() {
+      document.getElementById('janela-projeto').classList.remove('active');
+      projetoAtual = null;
+    }
+
+    carregarProjetos();
+  </script>
+</body>
+</html>

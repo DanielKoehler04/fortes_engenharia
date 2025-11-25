@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatorios</title>
+  <link rel="stylesheet" href="css/estilo.css">
+  <link rel="stylesheet" href="css/responsivo.css">
+</head>
+<body>
+  <nav class="barra-navegacao">
+    <div class="container conteudo-barra">
+      <a href="painel.html" class="marca">Fortes Engenharia</a>
+      <ul class="menu">
+        <li><a href="painel.html">Painel</a></li>
+        <li><a href="solicitar.html" data-papel="encarregado">Nova Solicitacao</a></li>
+        <li><a href="minhas-solicitacoes.html" data-papel="encarregado">Minhas Solicitacoes</a></li>
+        <li><a href="aprovacoes.html" data-papel="gerente">Aprovacoes</a></li>
+        <li><a href="relatorios.html" class="active">Relatorios</a></li>
+        <li><a href="cadastro-projeto.html" data-papel="gerente">Projetos</a></li>
+      </ul>
+      <div class="info-usuario">
+        <a class="user" href="perfil.html"><span class="user-name"></span></a>
+        <button class="botao-sair" onclick="Auth.logout()">Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container conteudo">
+    <div class="cabecalho-pagina">
+      <h1>Relatorios</h1>
+      <p>Visualize relatorios de horas extras</p>
+    </div>
+
+    <div class="grade-estatisticas">
+      <div class="cartao cartao-estatistica">
+        <div class="rotulo-estatistica">Total Horas (Mes)</div>
+        <span class="valor-estatistica" id="stat-total-horas">0h</span>
+      </div>
+      <div class="cartao cartao-estatistica">
+        <div class="rotulo-estatistica">Solicitacoes Aprovadas</div>
+        <span class="valor-estatistica" id="stat-aprovadas">0</span>
+      </div>
+      <div class="cartao cartao-estatistica">
+        <div class="rotulo-estatistica">Taxa Aprovacao</div>
+        <span class="valor-estatistica" id="stat-taxa">0%</span>
+      </div>
+    </div>
+
+    <div class="cartao">
+      <h2>Resumo de Solicitacoes</h2>
+      <div id="resumo-solicitacoes"></div>
+    </div>
+
+    <div class="cartao">
+      <h2>Horas Extras por Colaborador</h2>
+      <div id="tabela-colaboradores"></div>
+    </div>
+
+    <div class="cartao">
+      <h2>Horas Extras por Projeto</h2>
+      <div id="tabela-projetos"></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">Fortes Engenharia 2025</div>
+  </footer>
+
+  <script src="js/autenticacao.js"></script>
+  <script src="js/armazenamento.js"></script>
+  <script src="js/utilidades.js"></script>
+
+  <script>
+    Auth.protegerPagina();
+
+    function carregarRelatorios() {
+      const relatorioColaboradores = Storage.obterRelatorioHorasPorColaborador();
+      const relatorioProjetos = Storage.obterRelatorioHorasPorProjeto();
+      const solicitacoes = Storage.obterSolicitacoes();
+
+      const totalHoras = relatorioColaboradores.reduce((sum, r) => sum + parseFloat(r.totalHoras), 0);
+      const aprovadas = solicitacoes.filter(s => s.status === 'aprovada_gerente').length;
+      const pendentes = solicitacoes.filter(s => s.status === 'pendente' || s.status === 'aprovada_encarregado').length;
+      const reprovadas = solicitacoes.filter(s => s.status === 'reprovada').length;
+      const taxa = solicitacoes.length > 0 ? Math.round((aprovadas / solicitacoes.length) * 100) : 0;
+
+      document.getElementById('stat-total-horas').textContent = totalHoras.toFixed(1) + 'h';
+      document.getElementById('stat-aprovadas').textContent = aprovadas;
+      document.getElementById('stat-taxa').textContent = taxa + '%';
+
+      const resumoHTML = `
+        <p><strong>Total de Solicitacoes:</strong> ${solicitacoes.length}</p>
+        <p><strong>Aprovadas:</strong> ${aprovadas}</p>
+        <p><strong>Pendentes:</strong> ${pendentes}</p>
+        <p><strong>Reprovadas:</strong> ${reprovadas}</p>
+        <p><strong>Total de Horas Aprovadas:</strong> ${totalHoras.toFixed(1)}h</p>
+      `;
+      document.getElementById('resumo-solicitacoes').innerHTML = resumoHTML;
+
+      if (relatorioColaboradores.length === 0) {
+        document.getElementById('tabela-colaboradores').innerHTML = '<p>Nenhum dado disponivel.</p>';
+      } else {
+        const colunasColab = [
+          { titulo: 'Colaborador', campo: 'colaborador' },
+          { titulo: 'Solicitacoes', campo: 'totalSolicitacoes' },
+          { titulo: 'Horas Totais', campo: 'totalHoras' }
+        ];
+        App.renderizarTabela('tabela-colaboradores', relatorioColaboradores, colunasColab);
+      }
+
+      if (relatorioProjetos.length === 0) {
+        document.getElementById('tabela-projetos').innerHTML = '<p>Nenhum dado disponivel.</p>';
+      } else {
+        const colunasProjeto = [
+          { titulo: 'Projeto', campo: 'projeto' },
+          { titulo: 'Cliente', campo: 'cliente' },
+          { titulo: 'Solicitacoes', campo: 'totalSolicitacoes' },
+          { titulo: 'Horas Totais', campo: 'totalHoras' }
+        ];
+        App.renderizarTabela('tabela-projetos', relatorioProjetos, colunasProjeto);
+      }
+    }
+
+    carregarRelatorios();
+  </script>
+</body>
+</html>

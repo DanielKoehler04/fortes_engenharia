@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Horas Extras</title>
+  <link rel="stylesheet" href="css/estilo.css">
+  <link rel="stylesheet" href="css/responsivo.css">
+</head>
+<body>
+  <nav class="barra-navegacao">
+    <div class="container conteudo-barra">
+      <a href="#" class="marca">Fortes Engenharia</a>
+      
+      <div class="info-usuario"></div>
+    </div>
+  </nav>
+
+  <div class="faixa-intro" id="apresentacao">
+    <div class="container">
+      <h1>Controle de Horas Extras</h1>
+      <p>Sistema simples para solicitacoes e aprovacoes de horas extras.</p>
+    </div>
+  </div>
+
+  <div class="container conteudo">
+    <div class="grade-inicio">
+      <div class="coluna-esquerda">
+        <div class="cartao">
+          <h2>Sobre a Empresa</h2>
+          <p>A Fortes Engenharia atua em obras e projetos no ES.</p>
+        </div>
+
+        <div class="cartao">
+          <h2>Sobre o Sistema</h2>
+          <p>Sistema simples para controle de solicitacoes de horas extras.</p>
+        </div>
+
+        <div class="cartao" id="editais">
+          <h2>Editais para Submissao</h2>
+          <ul>
+            <li>Edital 01/2025 - Horas Extras</li>
+            <li>Edital 02/2025 - Projetos</li>
+            <li>Edital 03/2025 - Relatorios</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="coluna-direita" id="login">
+        <div class="caixa-login">
+          <h2>Login</h2>
+
+      <form id="form-login" onsubmit="realizarLogin(event)">
+        <div>
+          <label for="usuario">Usuario:</label>
+          <input type="text" id="usuario" name="usuario" required>
+        </div>
+        
+        <div>
+          <label for="senha">Senha:</label>
+          <input type="password" id="senha" name="senha" required>
+        </div>
+
+        <button type="submit">Entrar</button>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">Fortes Engenharia 2025</div>
+  </footer>
+
+  <script src="js/autenticacao.js"></script>
+  <script src="js/armazenamento.js"></script>
+  <script src="js/utilidades.js"></script>
+  
+  <script>
+    if(Auth.estaAutenticado()) {
+      window.location.href = 'painel.html';
+    }
+
+    function realizarLogin(event) {
+      event.preventDefault();
+      let usuario = document.getElementById('usuario').value;
+      let senha = document.getElementById('senha').value;
+      let resultado = Auth.login(usuario, senha);
+      
+      if(resultado.sucesso) {
+        Auth.redirecionarPorPapel();
+      } else {
+        alert(resultado.mensagem);
+      }
+    }
+  </script>
+</body>
+</html>
