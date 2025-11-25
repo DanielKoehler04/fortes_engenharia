@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,63 +8,64 @@
   <link rel="stylesheet" href="css/estilo.css">
   <link rel="stylesheet" href="css/responsivo.css">
 </head>
+
 <body>
   <nav class="barra-navegacao">
     <div class="container conteudo-barra">
       <a href="painel.html" class="marca">Fortes Engenharia</a>
       <ul class="menu">
         <li><a href="painel.html" class="active">Painel</a></li>
-        <li><a href="solicitar.html" data-papel="encarregado">Nova Solicitacao</a></li>
-        <li><a href="minhas-solicitacoes.html" data-papel="encarregado">Minhas Solicitacoes</a></li>
-        <li><a href="aprovacoes.html" data-papel="gerente">Aprovacoes</a></li>
+        <li><a href="solicitar.html" data-papel="encarregado">Nova Solicitação</a></li>
+        <li><a href="minhas-solicitacoes.html" data-papel="encarregado">Minhas Solicitações</a></li>
+        <li><a href="aprovacoes.html" data-papel="gerente">Aprovações</a></li>
         <li><a href="relatorios.html">Relatorios</a></li>
         <li><a href="cadastro-projeto.html" data-papel="gerente">Projetos</a></li>
       </ul>
       <div class="info-usuario">
-          <a class="user" href="perfil.html"><span class="user-name"></span></a>
+        <a class="user" href="perfil.html"><span class="user-name"></span></a>
         <button class="botao-sair" onclick="Auth.logout()">Sair</button>
       </div>
     </div>
   </nav>
 
   <div class="container conteudo nots">
-    
+
 
     <div class="noti-card">
-            <div class="noti-title noti-blue">Solicitações Pendentes</div>
+      <div class="noti-title noti-blue">Solicitações Pendentes</div>
 
-            <p><strong>• Solicitação dia 09/03 às 21:34 — Pendente</strong><br>
-            Descrição: Aguardando aprovação da gerência.</p>
+      <p><strong>• Solicitação dia 09/03 às 21:34 — Pendente</strong><br>
+        Descrição: Aguardando aprovação da gerência.</p>
 
-            <p><strong>• Solicitação dia 22/07 às 05:58 — Pendente</strong><br>
-            Descrição: Em análise pelo supervisor responsável.</p>
-        </div>
-
-        <!-- APROVADAS -->
-        <div class="noti-card">
-            <div class="noti-title noti-green">Solicitações Aprovadas</div>
-
-            <p><strong>• Solicitação dia 18/03 às 07:26 — Aprovada</strong><br>
-            Descrição: Horas extras aprovadas para acompanhamento de concretagem.</p>
-
-            <p><strong>Solicitação dia 02/10 às 16:41 — Aprovada</strong><br>
-            Descrição: Liberação autorizada para extensão da jornada durante inspeção estrutural.</p>
-        </div>
-
-        <!-- REJEITADAS -->
-        <div class="noti-card">
-            <div class="noti-title noti-red">Solicitações Rejeitadas</div>
-
-            <p><strong>• Solicitação dia 27/01 às 22:18 — Rejeitada</strong><br>
-            Descrição: Solicitação fora do escopo da atividade planejada.</p>
-
-            <p><strong>• Solicitação dia 11/08 às 05:03 — Rejeitada</strong><br>
-            Descrição: Registro incompatível com o horário permitido pela política interna.</p>
-        </div>
-
+      <p><strong>• Solicitação dia 22/07 às 05:58 — Pendente</strong><br>
+        Descrição: Em análise pelo supervisor responsável.</p>
     </div>
 
+
+    <div class="noti-card">
+      <div class="noti-title noti-green">Solicitações Aprovadas</div>
+
+      <p><strong>• Solicitação dia 18/03 às 07:26 — Aprovada</strong><br>
+        Descrição: Horas extras aprovadas para acompanhamento de concretagem.</p>
+
+      <p><strong>Solicitação dia 02/10 às 16:41 — Aprovada</strong><br>
+        Descrição: Liberação autorizada para extensão da jornada durante inspeção estrutural.</p>
     </div>
+
+
+    <div class="noti-card">
+      <div class="noti-title noti-red">Solicitações Rejeitadas</div>
+
+      <p><strong>• Solicitação dia 27/01 às 22:18 — Rejeitada</strong><br>
+        Descrição: Solicitação fora do escopo da atividade planejada.</p>
+
+      <p><strong>• Solicitação dia 11/08 às 05:03 — Rejeitada</strong><br>
+        Descrição: Registro incompatível com o horário permitido pela política interna.</p>
+    </div>
+
+  </div>
+
+  </div>
 
   <footer>
     <div class="container">Fortes Engenharia 2025</div>
@@ -79,14 +81,14 @@
     function carregarPainel() {
       let sessao = Auth.obterSessao();
       let solicitacoes = Storage.obterSolicitacoes();
-      
+
       let minhasSolicitacoes;
       let pendentes;
 
-      if(sessao.papel === 'tecnico') {
+      if (sessao.papel === 'tecnico') {
         minhasSolicitacoes = solicitacoes;
         pendentes = minhasSolicitacoes.filter(s => s.status === 'pendente');
-      } else if(sessao.papel === 'encarregado') {
+      } else if (sessao.papel === 'encarregado') {
         minhasSolicitacoes = solicitacoes;
         pendentes = solicitacoes.filter(s => s.status === 'pendente');
       } else {
@@ -94,7 +96,7 @@
         pendentes = solicitacoes.filter(s => s.status === 'aprovada_encarregado');
       }
 
-      let aprovadas = minhasSolicitacoes.filter(s => 
+      let aprovadas = minhasSolicitacoes.filter(s =>
         s.status === 'aprovada_encarregado' || s.status === 'aprovada_gerente'
       );
 
@@ -150,4 +152,5 @@
     carregarPainel();
   </script>
 </body>
+
 </html>
